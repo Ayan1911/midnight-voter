@@ -1,0 +1,54 @@
+name: Midnight dApp CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master, main, auction-dapp ]
+  pull_request:
+    branches: [ master, main, auction-dapp ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    name: Compact Compile, Test & Build
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Compact Compiler Toolchain
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          compact update
+          compact --version
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Compile Compact Smart Contracts
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          npm run compact:compile
+
+      - name: Execute Contract & Component Tests
+        run: npm test
+
+      - name: Build Production Frontend
+        run: npm run build
+
+      - name: Verify Managed Artifacts
+        run: |
+          test -f managed/contract/index.d.ts || exit 1
+          test -f managed/zkir/submitBid.zkir || exit 1
+          test -f managed/keys/submitBid.prover || exit 1
+          test -f dist/index.html || exit 1
+          echo "🎉 All Midnight ZK circuits and frontend builds verified successfully!"
