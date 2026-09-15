@@ -1,10 +1,16 @@
+
 import { deployContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { Contract, ledger } from '../managed/contract/index.js';
-import { getNetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import { createNetworkProvider } from '@midnight-ntwrk/midnight-js-network-provider';
-import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-providers';
+import { setNetworkId, getNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import { Transaction, WalletBuilder } from '@midnight-ntwrk/wallet';
-import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
+
+import * as NetworkProviderModule from '@midnight-ntwrk/midnight-js-network-provider';
+import * as FetchZkConfigProviderModule from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
+import * as ProvidersModule from '@midnight-ntwrk/midnight-js-providers';
+
+const { createNetworkProvider } = NetworkProviderModule as any;
+const { NodeZkConfigProvider } = FetchZkConfigProviderModule as any;
+const { httpClientProofProvider } = ProvidersModule as any;
 import * as fs from 'fs';
 import * as path from 'path';
 import 'dotenv/config';

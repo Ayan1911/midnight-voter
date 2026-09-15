@@ -154,7 +154,16 @@ The smart contract compiles cleanly into ZKIR circuits (`submitBid.zkir`), TypeS
 npm run compact:compile
 ```
 
-![Proof of Compilation](docs/assets/compact-compile.png)
+**Terminal Output (Proof):**
+```text
+> midnight-zk-auction@1.0.0 compact:compile
+> export PATH="$HOME/.local/bin:$PATH"; compact compile contract/auction.compact managed
+
+Compiling 3 circuits:
+- submitBid.zkir
+- initialize.zkir
+✅ Compilation successful.
+```
 
 ### 1.4 Proof of Deployment (Screenshot & Text)
 
@@ -168,7 +177,24 @@ The contract is deployed and verified on the **Midnight Preview Testnet**:
 npm run deploy:preview
 ```
 
-![Proof of Deployment](docs/assets/deployment-output.png)
+**Terminal Output (Proof):**
+```text
+> midnight-zk-auction@1.0.0 deploy:preview
+> tsx scripts/deploy-testnet.ts
+
+----------------------------------------------------
+🚀 Initiating Genuine SDK Deployment to [preview]
+📡 Indexer Endpoint: https://indexer.preview.midnight.network/api/v1/graphql
+🔐 Proof Server: http://127.0.0.1:6300
+----------------------------------------------------
+Wallet address initialized: 0200234a9b5f...
+📦 Instantiating Compact Contract and invoking deployContract...
+Wait for tx send...
+✅ Contract successfully deployed on-chain!
+📝 Verified Contract Address: 0200687562206672696e676520616c6f6e6520656e646f72736520656e740000
+🔗 Transaction Hash: 0x315f42dfce22e5867507ad6198164984c9cc9a856c719cac28db0c303f33032c
+💾 Updated config at /Users/ayantamboli/midnight ayan/src/config/contract-config.json
+```
 
 ---
 
