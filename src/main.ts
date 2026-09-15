@@ -11,7 +11,6 @@ const { NodeZkConfigProvider } = FetchZkConfigProviderModule as any;
 const { httpClientProofProvider } = ProvidersModule as any;
 import { findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import contractConfig from './config/contract-config.json';
-import { randomBytes } from 'crypto';
 
 document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.getElementById('submit-bid-btn') as HTMLButtonElement;
