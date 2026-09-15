@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Midnight ZK Sealed-Bid Auction</title>
+  <meta name="description" content="A Zero-Knowledge Sealed-Bid Auction built on the Midnight Network Preview Testnet." />
+  <link rel="stylesheet" href="./src/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+</head>
+<body>
+  
+  <header class="app-header">
+    <div class="logo">Midnight Auction</div>
+    <nav class="nav-pill">
+      <span>Preview Testnet</span>
+    </nav>
+    <div class="auth-pill" id="wallet-connect-btn">Connect 1AM Wallet</div>
+  </header>
+
+  <main class="hero">
+    <div class="trust-row">
+      <i class="fa-solid fa-shield-halved"></i> ZK Encrypted
+      <i class="fa-solid fa-network-wired"></i> Midnight Network
+    </div>
+    <h1 class="headline">Secure Sealed-Bid<br>Auction Protocol</h1>
+    <p class="subhead">Submit encrypted bids without revealing your amount. Resolved via ZK proofs.</p>
+    
+    <div class="action-card">
+      <form id="bid-form">
+        <input type="number" id="bid-amount" placeholder="Enter bid amount (tDUST)" required min="1" />
+        <button type="submit" class="cta-btn" id="submit-bid-btn">Submit ZK Bid</button>
+      </form>
+      <div id="status-message"></div>
+    </div>
+  </main>
+
+  <footer class="stats-footer">
+    <div class="metric-card">
+      <div class="metric-value" id="stat-status">Open</div>
+      <div class="metric-label">Auction Status</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="stat-reserve">100</div>
+      <div class="metric-label">Min Reserve</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="stat-bids">0</div>
+      <div class="metric-label">Total Bids</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="stat-highest-hash">---</div>
+      <div class="metric-label">Highest Commitment</div>
+    </div>
+  </footer>
+
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>
