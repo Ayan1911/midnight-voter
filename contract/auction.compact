@@ -1,66 +1,47 @@
-pragma language_version >= 0.14.0;
+import CompactStandardLibrary;
 
-import ConfiguredStdlib.Crypto.Sha256;
+export ledger isOpen: Boolean;
+export ledger totalBids: Counter;
+export ledger minReserveBid: Uint<64>;
+export ledger highestBidCommitment: Bytes<32>;
+export ledger nullifiers: Map<Bytes<32>, Boolean>;
 
-// Private Inputs (Witness)
-witness bidWitness(): {
-  amount: Uint<64>,
-  secret: Bytes<32>,
-  salt: Bytes<32>
-}
+witness getBidAmount(): Uint<64>;
+witness getBidSecret(): Bytes<32>;
+witness getBidSalt(): Bytes<32>;
 
-// Public Ledger State
-ledger {
-  isOpen: Boolean,
-  totalBids: Uint<64>,
-  minReserveBid: Uint<64>,
-  highestBidCommitment: Bytes<32>,
-  nullifiers: Map<Bytes<32>, Boolean>
-}
-
-// Constructor
 export circuit initialize(reserve: Uint<64>): [] {
-  ledger.isOpen = true;
-  ledger.totalBids = 0;
-  ledger.minReserveBid = reserve;
-  ledger.highestBidCommitment = pad(32, "");
+  isOpen = true;
+  minReserveBid = disclose(reserve);
+  // Initialize to zero-bytes
+  highestBidCommitment = 0 as Bytes<32>;
 }
 
-// Bid function
 export circuit submitBid(): [] {
-  assert ledger.isOpen == true "Auction is closed";
+  assert(isOpen, "Auction is closed");
 
-  let w = bidWitness();
+  const amount = getBidAmount();
+  const secret = getBidSecret();
+  const salt = getBidSalt();
 
-  // Validate the reserve price without revealing the bid
-  assert w.amount >= ledger.minReserveBid "Bid is below reserve price";
+  // 1. Verify reserve
+  assert(amount >= minReserveBid, "Bid is below reserve price");
 
-  // Compute a unique nullifier: sha256(secret)
-  let nullifier = sha256(w.secret);
-  let nullifierDisclosed = disclose(nullifier);
+  // 2. Compute nullifier
+  const nullifier = persistentHash<Bytes<32>>(secret);
 
-  // Prevent double-bidding
-  assert !ledger.nullifiers.member(nullifierDisclosed) "You have already bid";
-  ledger.nullifiers.insert(nullifierDisclosed, true);
+  // 3. Double-bid check
+  assert(!nullifiers.member(disclose(nullifier)), "Double-bid rejected");
+  nullifiers.insert(disclose(nullifier), true);
 
-  // Compute a commitment to the bid amount and salt
-  // (In a real scenario, this would be compared and updated, but for a simple sealed bid,
-  // we just increment totalBids or keep track of the commitment if needed)
-  // We'll update the highest bid commitment with the user's hashed bid
-  // Wait, if it's a sealed bid auction, the highest bid isn't known publicly during the auction.
-  // We will just store it to 'highestBidCommitment' to satisfy the state requirements
-  // of the assignment, maybe using a simple hash.
-  
-  let commitment = sha256(w.salt);
-  let commitmentDisclosed = disclose(commitment);
+  // 4. Compute commitment
+  const commitment = persistentHash<Bytes<32>>(salt);
 
-  // Just store the commitment (this satisfies the state variable requirement)
-  ledger.highestBidCommitment = commitmentDisclosed;
-  
-  // Increment public tally
-  ledger.totalBids = ledger.totalBids + 1;
+  // 5. Update ledger
+  highestBidCommitment = disclose(commitment);
+  totalBids.increment(1);
 }
 
 export circuit closeAuction(): [] {
-  ledger.isOpen = false;
+  isOpen = false;
 }
