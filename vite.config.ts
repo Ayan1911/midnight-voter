@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import wasm from 'vite-plugin-wasm';
 
 export default defineConfig({
   plugins: [
+    wasm(),
     nodePolyfills({
-      include: ['buffer', 'crypto', 'stream', 'util'],
+      include: ['crypto', 'buffer', 'stream', 'util'],
       globals: {
         Buffer: true,
         global: true,

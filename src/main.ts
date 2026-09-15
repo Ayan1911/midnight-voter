@@ -2,9 +2,13 @@ import './style.css';
 import { walletConnector } from './services/walletConnector';
 import { Contract, ledger } from '../managed/contract/index.js';
 import { setNetworkId, getNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import { createNetworkProvider } from '@midnight-ntwrk/midnight-js-network-provider';
-import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
-import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-providers';
+import * as NetworkProviderModule from '@midnight-ntwrk/midnight-js-network-provider';
+import * as FetchZkConfigProviderModule from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
+import * as ProvidersModule from '@midnight-ntwrk/midnight-js-providers';
+
+const { createNetworkProvider } = NetworkProviderModule as any;
+const { NodeZkConfigProvider } = FetchZkConfigProviderModule as any;
+const { httpClientProofProvider } = ProvidersModule as any;
 import { findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import contractConfig from './config/contract-config.json';
 import { randomBytes } from 'crypto';
