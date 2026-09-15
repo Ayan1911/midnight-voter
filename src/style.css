@@ -76,6 +76,87 @@ body, html {
   padding: 4rem 1rem;
 }
 
+@font-face {
+  font-family: 'BubbledotICG-FinePos';
+  src: url('https://db.onlinewebfonts.com/t/2c8b0e788cb95b11c03e622b1016ed2a.woff2') format('woff2');
+}
+
+.headline {
+  font-family: 'BubbledotICG-FinePos', 'Geist Pixel Circle', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 1rem 0;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.subhead {
+  font-size: 1.25rem;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  opacity: 0.9;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.trust-row {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.trust-row i {
+  color: var(--primary);
+  margin-right: 0.5rem;
+}
+
+.action-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  padding: 2rem;
+  border-radius: 1rem;
+  max-width: 400px;
+  width: 100%;
+}
+
+.action-card input {
+  width: calc(100% - 2rem);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--glass-border);
+  border-radius: 0.5rem;
+  color: white;
+  font-size: 1rem;
+}
+
+.cta-btn {
+  width: 100%;
+  padding: 1rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cta-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.cta-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .stats-footer {
   display: flex;
   justify-content: space-around;
