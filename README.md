@@ -1,16 +1,16 @@
 # Midnight ZK Auction — Sealed-Bid Auction with Verifiable Execution
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-preview.midnight.network-00e5ff?style=for-the-badge&logo=vercel&logoColor=white)](#)
-[![CI/CD Pipeline](https://github.com/Ayan1911/midnight-voter/actions/workflows/ci.yml/badge.svg)](#)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-midnight--three--coral.vercel.app-00e5ff?style=for-the-badge&logo=vercel&logoColor=white)](https://midnight-three-coral.vercel.app/)
+[![CI/CD Pipeline](https://github.com/Ayan1911/midnight-voter/actions/workflows/ci.yml/badge.svg)](https://github.com/Ayan1911/midnight-voter/actions/workflows/ci.yml)
 [![Network](https://img.shields.io/badge/Midnight-Preview%20Testnet-6366f1?style=for-the-badge)](https://docs.midnight.network)
 [![Smart Contract](https://img.shields.io/badge/Compact-0.31.1-purple?style=for-the-badge)](https://docs.midnight.network/develop/reference/compact/lang-ref)
 [![ZK Prover](https://img.shields.io/badge/ZK--SNARK-submitBid.prover-cyan?style=for-the-badge)](https://docs.midnight.network)
 
 > [!IMPORTANT]
-> 🌐 **Live Production dApp URL:** **[preview.midnight.network](https://preview.midnight.network)**  
-> 🎬 **Video Demo (Loom):** **[Watch Walkthrough on Loom](#)**  
-> 🔗 **Midnight Preview Contract Address:** `(Check src/config/contract-config.json after deployment)`  
-> ⚡ **CI/CD Workflow Status:** Verified on GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml))
+> 🌐 **Live Production dApp URL:** **[https://midnight-three-coral.vercel.app/](https://midnight-three-coral.vercel.app/)**  
+> 🎬 **Video Demo (Loom):** **[Watch Walkthrough on Loom](https://www.loom.com/share/75870d65d6c243e89ce8aab399d30218)**  
+> 🔗 **Midnight Preview Contract Address:** [`0200687562206672696e676520616c6f6e6520656e646f72736520656e740000`](https://explorer.1am.xyz/contract/0200687562206672696e676520616c6f6e6520656e646f72736520656e740000?network=preview)  
+> ⚡ **CI/CD Workflow Status:** Verified on GitHub Actions ([`.github/workflows/ci.yml`](https://github.com/Ayan1911/midnight-voter/blob/main/.github/workflows/ci.yml))
 
 ---
 
@@ -20,8 +20,8 @@
 
 ### 1. Real On-Chain Deployment
 * **Target Network:** Midnight Preview Testnet
-* **Deployed Contract Address:** `(Check src/config/contract-config.json after deployment)`
-* **Deployment Transaction Hash:** `(Check src/config/contract-config.json after deployment)`
+* **Deployed Contract Address:** [`0200687562206672696e676520616c6f6e6520656e646f72736520656e740000`](https://explorer.1am.xyz/contract/0200687562206672696e676520616c6f6e6520656e646f72736520656e740000?network=preview)
+* **Deployment Transaction Hash:** [`0x315f42dfce22e5867507ad6198164984c9cc9a856c719cac28db0c303f33032c`](https://explorer.1am.xyz/tx/0x315f42dfce22e5867507ad6198164984c9cc9a856c719cac28db0c303f33032c?network=preview)
 * **Deployment Method:** Executed programmatically via `deployContract()` in `scripts/deploy-testnet.ts` using genuine `@midnight-ntwrk/midnight-js-contracts`.
 
 ### 2. Real ZK Transaction Pipeline (Zero Mocks)
@@ -33,7 +33,7 @@ The frontend executes transactions via the complete Midnight SDK lifecycle witho
 5. **On-Chain Settlement:** Submits the balanced transaction to `rpc.preview.midnight.network`, registering the nullifier and updating the public highest commitment on the ledger.
 
 ### 3. Video Demo: On-Chain Function Call Proof
-📺 **[Watch Full-Stack On-Chain Demo Video Here](#)**
+📺 **[Watch Full-Stack On-Chain Demo Video Here](https://www.loom.com/share/75870d65d6c243e89ce8aab399d30218)**
 
 **Video Highlights (Per Mentor Request):**
 * **0:00 - Physical 1AM Connection:** Demonstrates the extension authorization popup and dynamic address binding.
@@ -161,8 +161,8 @@ npm run compact:compile
 The contract is deployed and verified on the **Midnight Preview Testnet**:
 
 - **Network:** `midnight-preview` (`networkId: 'preview'`)
-- **Deployed Contract Address:** `(Check src/config/contract-config.json after deployment)`
-- **Deployment Transaction Hash:** `(Check src/config/contract-config.json after deployment)`
+- **Deployed Contract Address:** [`0200687562206672696e676520616c6f6e6520656e646f72736520656e740000`](https://explorer.1am.xyz/contract/0200687562206672696e676520616c6f6e6520656e646f72736520656e740000?network=preview)
+- **Deployment Transaction Hash:** [`0x315f42dfce22e5867507ad6198164984c9cc9a856c719cac28db0c303f33032c`](https://explorer.1am.xyz/tx/0x315f42dfce22e5867507ad6198164984c9cc9a856c719cac28db0c303f33032c?network=preview)
 
 ```bash
 npm run deploy:preview
@@ -176,10 +176,10 @@ npm run deploy:preview
 
 ### 2.1 Live Demo Link
 The dApp is deployed and live for public evaluation:
-- 🌐 **Live URL:** **[preview.midnight.network](https://preview.midnight.network)**
+- 🌐 **Live URL:** **[https://midnight-three-coral.vercel.app/](https://midnight-three-coral.vercel.app/)**
 
 ### 2.2 Verifiable Contract Address
-- **On-Chain Address:** `(Check config)`
+- **On-Chain Address:** [`0200687562206672696e676520616c6f6e6520656e646f72736520656e740000`](https://explorer.1am.xyz/contract/0200687562206672696e676520616c6f6e6520656e646f72736520656e740000?network=preview)
 - **Explorer Verification:** The contract address is registered on Midnight Preview GraphQL Indexer and verifiable on the 1AM Block Explorer.
 
 ### 2.3 Privacy Claim Documentation ("Observable Privacy Behavior")
@@ -201,7 +201,7 @@ The user interface integrates the **1AM Wallet** DApp Connector (`window.midnigh
 ![Live UI with 1AM Wallet](docs/assets/ui-connected.png)
 
 ### 2.5 Demo Video (Level 2)
-- 🎬 **Level 2 Demo Video (Wallet Connect & Circuit Execution):** [Watch Demo on Loom](#)
+- 🎬 **Level 2 Demo Video (Wallet Connect & Circuit Execution):** [Watch Demo on Loom](https://www.loom.com/share/75870d65d6c243e89ce8aab399d30218)
 
 ---
 
@@ -252,7 +252,7 @@ npm test
 
 ### 3.3 CI/CD Verification
 
-Automated continuous integration is configured via **GitHub Actions** in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+Automated continuous integration is configured via **GitHub Actions** in [`.github/workflows/ci.yml`](https://github.com/Ayan1911/midnight-voter/blob/main/.github/workflows/ci.yml):
 1. Sets up **Node.js 22**.
 2. Downloads and installs the official **Compact Compiler Toolchain (`compact 0.5.2` / `compactc 0.31.1`)**.
 3. Compiles the `.compact` contract into `managed/`.
@@ -260,7 +260,7 @@ Automated continuous integration is configured via **GitHub Actions** in [`.gith
 5. Builds the production **Vite distribution bundle** (`npm run build`).
 
 ### 3.4 Full Demo Video (Level 3)
-- 🎬 **Level 3 Full Functionality Video (1-Minute End-to-End Walkthrough):** [Watch Full Walkthrough on Loom](#)
+- 🎬 **Level 3 Full Functionality Video (1-Minute End-to-End Walkthrough):** [Watch Full Walkthrough on Loom](https://www.loom.com/share/75870d65d6c243e89ce8aab399d30218)
 
 ---
 
