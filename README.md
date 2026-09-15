@@ -274,7 +274,19 @@ The repository includes comprehensive automated test suites covering Compact sma
 npm test
 ```
 
-![Proof of Testing](docs/assets/test-results.png)
+**Terminal Output (Proof):**
+```text
+> midnight-zk-auction@1.0.0 test
+> vitest run
+
+ RUN  v1.6.1 /Users/ayantamboli/midnight ayan
+
+ ✓ tests/auction.test.ts  (4 tests) 1ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Duration  124ms
+```
 
 ### 3.3 CI/CD Verification
 
