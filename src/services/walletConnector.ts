@@ -1,27 +1,52 @@
-import { DAppConnectorAPI, DAppConnectorWalletAPI } from '@midnight-ntwrk/dapp-connector-api';
+import type { InitialAPI, WalletConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
 
 export class WalletConnector {
-  private walletAPI: DAppConnectorWalletAPI | null = null;
+  private walletAPI: WalletConnectedAPI | null = null;
   private address: string | null = null;
 
-  async connect(): Promise<{ connected: boolean; address?: string; error?: string }> {
+  async connect(networkId: string): Promise<{ connected: boolean; address?: string; error?: string }> {
     try {
-      // Access the 1AM wallet extension on the window object
-      const mn = (window as any).midnight;
-      if (!mn || !mn.mn1am) {
-        throw new Error('1AM Wallet extension not found. Please install the extension.');
+      // 1. Polling for window.midnight since extensions inject after page load
+      let mn = (window as any).midnight;
+      if (!mn) {
+        for (let i = 0; i < 15; i++) {
+          await new Promise(r => setTimeout(r, 200));
+          mn = (window as any).midnight;
+          if (mn) break;
+        }
+      }
+      
+      if (!mn) {
+        throw new Error('No Midnight wallet extension found. Please install a compatible wallet.');
       }
 
-      const connector: DAppConnectorAPI = mn.mn1am;
+      // 2. Support any injected wallet dynamically instead of hardcoding mn1am
+      const wallets = Object.values(mn) as InitialAPI[];
+      if (wallets.length === 0) {
+        throw new Error('No Midnight wallet extension found.');
+      }
+
+      // Rationale for auto-picking wallets[0]: 
+      // In the current Midnight ecosystem (Preview), users typically only have 
+      // one active wallet extension (Lace or 1AM) enabled at a time to prevent 
+      // dApp injection conflicts. If multiple are detected, we safely default 
+      // to the first injected provider (the active one). Future production 
+      // versions should implement a modal wallet selector UI.
+      const connector = wallets[0];
       
-      // Request connection/enable
-      const api = await connector.enable();
+      // 3. Request connection
+      let api;
+      try {
+        api = await connector.connect(networkId);
+      } catch (e) {
+         throw new Error('Connection rejected by user');
+      }
+      
       this.walletAPI = api;
+      const unshieldedAddress = await api.getUnshieldedAddress();
+      this.address = unshieldedAddress.unshieldedAddress;
 
-      const state = await api.state();
-      this.address = state.address;
-
-      return { connected: true, address: state.address };
+      return { connected: true, address: this.address ?? undefined };
     } catch (err: any) {
       console.error("Wallet connection failed:", err);
       return { connected: false, error: err.message || 'Connection rejected' };
@@ -29,13 +54,12 @@ export class WalletConnector {
   }
 
   async disconnect(): Promise<void> {
+    // Completely nullify internal class state references
     this.walletAPI = null;
     this.address = null;
-    // The DApp connector API lacks a standard explicit disconnect,
-    // so we just clear local state for the frontend.
   }
 
-  getApi(): DAppConnectorWalletAPI | null {
+  getApi(): WalletConnectedAPI | null {
     return this.walletAPI;
   }
 
