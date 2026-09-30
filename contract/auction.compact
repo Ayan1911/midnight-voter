@@ -1,47 +1,72 @@
 import CompactStandardLibrary;
 
+export ledger isInitialized: Boolean;
+export ledger organizer: Bytes<32>;
 export ledger isOpen: Boolean;
-export ledger totalBids: Counter;
 export ledger minReserveBid: Uint<64>;
-export ledger highestBidCommitment: Bytes<32>;
-export ledger nullifiers: Map<Bytes<32>, Boolean>;
+export ledger commitments: Map<Bytes<32>, Bytes<32>>;
+export ledger highestBid: Uint<64>;
+export ledger highestBidder: Bytes<32>;
 
 witness getBidAmount(): Uint<64>;
 witness getBidSecret(): Bytes<32>;
 witness getBidSalt(): Bytes<32>;
+witness getOrganizerSecret(): Bytes<32>;
 
 export circuit initialize(reserve: Uint<64>): [] {
+  assert(!isInitialized, "Auction already initialized");
+  const orgSecret = getOrganizerSecret();
+  organizer = disclose(persistentHash<Bytes<32>>(orgSecret));
+  isInitialized = true;
   isOpen = true;
   minReserveBid = disclose(reserve);
-  // Initialize to zero-bytes
-  highestBidCommitment = 0 as Bytes<32>;
+  highestBid = 0 as Uint<64>;
+  highestBidder = 0 as Bytes<32>;
 }
 
-export circuit submitBid(): [] {
-  assert(isOpen, "Auction is closed");
+export circuit place_bid(): [] {
+  assert(isOpen, "Auction is closed for bidding");
 
   const amount = getBidAmount();
   const secret = getBidSecret();
   const salt = getBidSalt();
 
-  // 1. Verify reserve
   assert(amount >= minReserveBid, "Bid is below reserve price");
 
-  // 2. Compute nullifier
-  const nullifier = persistentHash<Bytes<32>>(secret);
+  const bidderId = persistentHash<Bytes<32>>(secret);
+  const commitment = persistentHash<[Uint<64>, Bytes<32>]>([amount, salt]);
+  
+  // To avoid duplicate bids from the same bidder id, assert it's not member
+  assert(!commitments.member(disclose(bidderId)), "Bid already placed");
 
-  // 3. Double-bid check
-  assert(!nullifiers.member(disclose(nullifier)), "Double-bid rejected");
-  nullifiers.insert(disclose(nullifier), true);
-
-  // 4. Compute commitment
-  const commitment = persistentHash<Bytes<32>>(salt);
-
-  // 5. Update ledger
-  highestBidCommitment = disclose(commitment);
-  totalBids.increment(1);
+  commitments.insert(disclose(bidderId), disclose(commitment));
 }
 
-export circuit closeAuction(): [] {
+export circuit close_auction(): [] {
+  assert(isOpen, "Auction is already closed");
+  const orgSecret = getOrganizerSecret();
+  assert(disclose(persistentHash<Bytes<32>>(orgSecret)) == organizer, "Unauthorized: Only organizer can close auction");
   isOpen = false;
 }
+
+export circuit reveal_bid(): [] {
+  assert(!isOpen, "Auction is still open for bidding");
+
+  const amount = getBidAmount();
+  const secret = getBidSecret();
+  const salt = getBidSalt();
+
+  const bidderId = persistentHash<Bytes<32>>(secret);
+  const commitment = persistentHash<[Uint<64>, Bytes<32>]>([amount, salt]);
+
+  // Verify commitment
+  assert(commitments.member(disclose(bidderId)), "No commitment found for bidder");
+  const storedCommitment = commitments.lookup(disclose(bidderId));
+  assert(storedCommitment == disclose(commitment), "Invalid bid reveal");
+
+  if (disclose(amount) > highestBid) {
+    highestBid = disclose(amount);
+    highestBidder = disclose(bidderId);
+  }
+}
+

@@ -22,6 +22,9 @@ export default defineConfig({
     target: 'esnext',
     minify: false
   },
+  resolve: {
+    dedupe: ['@midnight-ntwrk/compact-runtime', '@midnight-ntwrk/compact-js', '@midnight-ntwrk/midnight-js-contracts'],
+  },
   optimizeDeps: {
     esbuildOptions: {
       target: 'esnext',
