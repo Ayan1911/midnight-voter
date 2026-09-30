@@ -4,41 +4,47 @@ export type Witnesses<PS> = {
   getBidAmount(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, bigint];
   getBidSecret(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, Uint8Array];
   getBidSalt(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, Uint8Array];
+  getOrganizerSecret(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, Uint8Array];
 }
 
 export type ImpureCircuits<PS> = {
-  initialize(context: __compactRuntime.CircuitContext<PS>, reserve_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  submitBid(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
-  closeAuction(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
+  initialize(context: __compactRuntime.CircuitContext<PS>, reserve_0: bigint): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  place_bid(context: __compactRuntime.CircuitContext<PS>): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  close_auction(context: __compactRuntime.CircuitContext<PS>): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  reveal_bid(context: __compactRuntime.CircuitContext<PS>): Promise<__compactRuntime.CircuitResults<PS, []>>;
 }
 
 export type ProvableCircuits<PS> = {
-  initialize(context: __compactRuntime.CircuitContext<PS>, reserve_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  submitBid(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
-  closeAuction(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
+  initialize(context: __compactRuntime.CircuitContext<PS>, reserve_0: bigint): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  place_bid(context: __compactRuntime.CircuitContext<PS>): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  close_auction(context: __compactRuntime.CircuitContext<PS>): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  reveal_bid(context: __compactRuntime.CircuitContext<PS>): Promise<__compactRuntime.CircuitResults<PS, []>>;
 }
 
 export type PureCircuits = {
 }
 
 export type Circuits<PS> = {
-  initialize(context: __compactRuntime.CircuitContext<PS>, reserve_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  submitBid(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
-  closeAuction(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
+  initialize(context: __compactRuntime.CircuitContext<PS>, reserve_0: bigint): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  place_bid(context: __compactRuntime.CircuitContext<PS>): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  close_auction(context: __compactRuntime.CircuitContext<PS>): Promise<__compactRuntime.CircuitResults<PS, []>>;
+  reveal_bid(context: __compactRuntime.CircuitContext<PS>): Promise<__compactRuntime.CircuitResults<PS, []>>;
 }
 
 export type Ledger = {
+  readonly isInitialized: boolean;
+  readonly organizer: Uint8Array;
   readonly isOpen: boolean;
-  readonly totalBids: bigint;
   readonly minReserveBid: bigint;
-  readonly highestBidCommitment: Uint8Array;
-  nullifiers: {
+  commitments: {
     isEmpty(): boolean;
     size(): bigint;
     member(key_0: Uint8Array): boolean;
-    lookup(key_0: Uint8Array): boolean;
-    [Symbol.iterator](): Iterator<[Uint8Array, boolean]>
+    lookup(key_0: Uint8Array): Uint8Array;
+    [Symbol.iterator](): Iterator<[Uint8Array, Uint8Array]>
   };
+  readonly highestBid: bigint;
+  readonly highestBidder: Uint8Array;
 }
 
 export type ContractReferenceLocations = any;
@@ -51,8 +57,9 @@ export declare class Contract<PS = any, W extends Witnesses<PS> = Witnesses<PS>>
   impureCircuits: ImpureCircuits<PS>;
   provableCircuits: ProvableCircuits<PS>;
   constructor(witnesses: W);
-  initialState(context: __compactRuntime.ConstructorContext<PS>): __compactRuntime.ConstructorResult<PS>;
+  initialState(context: __compactRuntime.ConstructorContext<PS>): Promise<__compactRuntime.ConstructorResult<PS>>;
 }
 
 export declare function ledger(state: __compactRuntime.StateValue | __compactRuntime.ChargedState): Ledger;
 export declare const pureCircuits: PureCircuits;
+export declare const expectedVk: Record<string, string>;
