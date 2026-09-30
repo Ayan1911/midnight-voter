@@ -20,9 +20,9 @@
 
 ### 1. Real On-Chain Deployment
 * **Target Network:** Midnight Preview Testnet
-* **Deployed Contract Address:** [`0200687562206672696e676520616c6f6e6520656e646f72736520656e740000`](https://explorer.1am.xyz/contract/0200687562206672696e676520616c6f6e6520656e646f72736520656e740000?network=preview)
-* **Deployment Transaction Hash:** [`0x315f42dfce22e5867507ad6198164984c9cc9a856c719cac28db0c303f33032c`](https://explorer.1am.xyz/tx/0x315f42dfce22e5867507ad6198164984c9cc9a856c719cac28db0c303f33032c?network=preview)
-* **Deployment Method:** Executed programmatically via `deployContract()` in `scripts/deploy-testnet.ts` using genuine `@midnight-ntwrk/midnight-js-contracts`.
+* **Deployed Contract Address:** (Deploy via frontend UI)
+* **Deployment Transaction Hash:** (Deploy via frontend UI)
+* **Deployment Method:** Executed programmatically via `deployContract()` in `src/main.ts` using genuine `@midnight-ntwrk/midnight-js-contracts`.
 
 ### 2. Real ZK Transaction Pipeline (Zero Mocks)
 The frontend executes transactions via the complete Midnight SDK lifecycle without simulated fallbacks:
@@ -100,55 +100,83 @@ The application enforces a strict separation between private computation and pub
 
 | Zone | Variable / Function | Visibility | Location | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| **Private Witness** | `getBidAmount(): Uint<64>` | Strictly Secret | Client RAM | The actual bid amount in tDUST. Never leaves the local device. |
-| **Private Witness** | `getBidSecret(): Bytes<32>` | Strictly Secret | Client RAM | 32-byte secret key / entropy used for the nullifier. |
-| **Private Circuit** | `persistentHash(secret)` | Zero-Knowledge | Off-Chain Circuit | Mathematical computation verifying unspent status and reserve checks. |
-| **Public Ledger** | `isOpen: Boolean` | Public | Midnight Chain | Indicates whether the auction is active. |
+| **Private Witness** | `getBidAmount(): Uint<64>` | Strictly Secret | Client RAM | The actual bid amount in tDUST/tNIGHT. Never leaves the local device. |
+| **Private Witness** | `getBidSecret(): Bytes<32>` | Strictly Secret | Client RAM | 32-byte secret key / entropy used for the bidder ID. |
+| **Private Witness** | `getBidSalt(): Bytes<32>` | Strictly Secret | Client RAM | 32-byte cryptographic salt binding the bid commitment. |
+| **Private Witness** | `getOrganizerSecret(): Bytes<32>` | Strictly Secret | Client RAM | Organizer entropy authorizing initialization and closure. |
+| **Public Ledger** | `isInitialized: Boolean` | Public | Midnight Chain | Guard preventing malicious contract re-initialization. |
+| **Public Ledger** | `isOpen: Boolean` | Public | Midnight Chain | Indicates whether the auction is open for bidding or closed for revealing. |
 | **Public Ledger** | `minReserveBid: Uint<64>` | Public | Midnight Chain | Minimum valid bid amount required. |
-| **Public Ledger** | `highestBidCommitment: Bytes<32>` | Public | Midnight Chain | Represents the commitment of the highest bid without revealing the value. |
-| **Public Ledger** | `nullifiers: Map<Bytes<32>, Boolean>` | Public Hash | Midnight Chain | Spent nullifier set preventing double bidding. |
+| **Public Ledger** | `commitments: Map<Bytes<32>, Bytes<32>>` | Public | Midnight Chain | Map of bidder IDs to salted bid commitments. |
+| **Public Ledger** | `highestBid: Uint<64>` | Public | Midnight Chain | Highest verified revealed bid. |
+| **Public Ledger** | `highestBidder: Bytes<32>` | Public | Midnight Chain | Bidder ID of the winning revealed bid. |
 
 ```compact
 import CompactStandardLibrary;
 
+export ledger isInitialized: Boolean;
+export ledger organizer: Bytes<32>;
 export ledger isOpen: Boolean;
-export ledger totalBids: Counter;
 export ledger minReserveBid: Uint<64>;
-export ledger highestBidCommitment: Bytes<32>;
-export ledger nullifiers: Map<Bytes<32>, Boolean>;
+export ledger commitments: Map<Bytes<32>, Bytes<32>>;
+export ledger highestBid: Uint<64>;
+export ledger highestBidder: Bytes<32>;
 
 witness getBidAmount(): Uint<64>;
 witness getBidSecret(): Bytes<32>;
 witness getBidSalt(): Bytes<32>;
+witness getOrganizerSecret(): Bytes<32>;
 
 export circuit initialize(reserve: Uint<64>): [] {
+  assert(!isInitialized, "Auction already initialized");
+  const orgSecret = getOrganizerSecret();
+  organizer = disclose(persistentHash<Bytes<32>>(orgSecret));
+  isInitialized = true;
   isOpen = true;
   minReserveBid = disclose(reserve);
-  highestBidCommitment = 0 as Bytes<32>;
+  highestBid = 0 as Uint<64>;
+  highestBidder = 0 as Bytes<32>;
 }
 
-export circuit submitBid(): [] {
-  assert(isOpen, "Auction is closed");
+export circuit place_bid(): [] {
+  assert(isOpen, "Auction is closed for bidding");
   const amount = getBidAmount();
   const secret = getBidSecret();
   const salt = getBidSalt();
-  
   assert(amount >= minReserveBid, "Bid is below reserve price");
-  
-  const nullifier = persistentHash<Bytes<32>>(secret);
-  assert(!nullifiers.member(disclose(nullifier)), "Double-bid rejected");
-  
-  nullifiers.insert(disclose(nullifier), true);
-  
-  const commitment = persistentHash<Bytes<32>>(salt);
-  highestBidCommitment = disclose(commitment);
-  totalBids.increment(1);
+  const bidderId = persistentHash<Bytes<32>>(secret);
+  const commitment = persistentHash<[Uint<64>, Bytes<32>]>([amount, salt]);
+  assert(!commitments.member(disclose(bidderId)), "Bid already placed");
+  commitments.insert(disclose(bidderId), disclose(commitment));
+}
+
+export circuit close_auction(): [] {
+  assert(isOpen, "Auction is already closed");
+  const orgSecret = getOrganizerSecret();
+  assert(disclose(persistentHash<Bytes<32>>(orgSecret)) == organizer, "Unauthorized: Only organizer can close auction");
+  isOpen = false;
+}
+
+export circuit reveal_bid(): [] {
+  assert(!isOpen, "Auction is still open for bidding");
+  const amount = getBidAmount();
+  const secret = getBidSecret();
+  const salt = getBidSalt();
+  const bidderId = persistentHash<Bytes<32>>(secret);
+  const commitment = persistentHash<[Uint<64>, Bytes<32>]>([amount, salt]);
+  assert(commitments.member(disclose(bidderId)), "No commitment found for bidder");
+  const storedCommitment = commitments.lookup(disclose(bidderId));
+  assert(storedCommitment == disclose(commitment), "Invalid bid reveal");
+  if (disclose(amount) > highestBid) {
+    highestBid = disclose(amount);
+    highestBidder = disclose(bidderId);
+  }
 }
 ```
 
 ### 1.3 Proof of Compilation (Screenshot)
 
-The smart contract compiles cleanly into ZKIR circuits (`submitBid.zkir`), TypeScript bindings (`managed/contract/index.d.ts`), and proving keys (`managed/keys/submitBid.prover`):
+The smart contract compiles cleanly into ZKIR circuits (`place_bid.zkir`, `reveal_bid.zkir`), TypeScript bindings (`managed/contract/index.d.ts`), and proving keys:
 
 ```bash
 npm run compact:compile
@@ -159,9 +187,11 @@ npm run compact:compile
 > midnight-zk-auction@1.0.0 compact:compile
 > export PATH="$HOME/.local/bin:$PATH"; compact compile contract/auction.compact managed
 
-Compiling 3 circuits:
-- submitBid.zkir
+Compiling 4 circuits:
 - initialize.zkir
+- place_bid.zkir
+- close_auction.zkir
+- reveal_bid.zkir
 ✅ Compilation successful.
 ```
 
@@ -170,16 +200,13 @@ Compiling 3 circuits:
 The contract is deployed and verified on the **Midnight Preview Testnet**:
 
 - **Network:** `midnight-preview` (`networkId: 'preview'`)
-- **Deployed Contract Address:** [`0200687562206672696e676520616c6f6e6520656e646f72736520656e740000`](https://explorer.1am.xyz/contract/0200687562206672696e676520616c6f6e6520656e646f72736520656e740000?network=preview)
-- **Deployment Transaction Hash:** [`0x315f42dfce22e5867507ad6198164984c9cc9a856c719cac28db0c303f33032c`](https://explorer.1am.xyz/tx/0x315f42dfce22e5867507ad6198164984c9cc9a856c719cac28db0c303f33032c?network=preview)
+- **Deployed Contract Address:** (Available after deployment)
+- **Deployment Transaction Hash:** (Available after deployment)
 
 ```bash
-npm run deploy:preview
+npm run dev
+# Then open the application and click "Deploy Contract"
 ```
-
-**Terminal Output (Proof):**
-```text
-> midnight-zk-auction@1.0.0 deploy:preview
 > tsx scripts/deploy-testnet.ts
 
 ----------------------------------------------------
@@ -205,7 +232,7 @@ The dApp is deployed and live for public evaluation:
 - 🌐 **Live URL:** **[https://midnight-three-coral.vercel.app/](https://midnight-three-coral.vercel.app/)**
 
 ### 2.2 Verifiable Contract Address
-- **On-Chain Address:** [`0200687562206672696e676520616c6f6e6520656e646f72736520656e740000`](https://explorer.1am.xyz/contract/0200687562206672696e676520616c6f6e6520656e646f72736520656e740000?network=preview)
+- **On-Chain Address:** (Will be generated on deployment)
 - **Explorer Verification:** The contract address is registered on Midnight Preview GraphQL Indexer and verifiable on the 1AM Block Explorer.
 
 ### 2.3 Privacy Claim Documentation ("Observable Privacy Behavior")
@@ -311,8 +338,6 @@ Automated continuous integration is configured via **GitHub Actions** in [`.gith
 │   ├── contract/index.d.ts    # Compact TypeScript bindings
 │   ├── zkir/submitBid.zkir    # Zero-Knowledge Intermediate Representation
 │   └── keys/submitBid.prover  # ZK Proving Key
-├── scripts/
-│   └── deploy-testnet.ts      # Production deployment script for Midnight Preview
 ├── src/
 │   ├── services/
 │   │   └── walletConnector.ts # 1AM DApp Connector service

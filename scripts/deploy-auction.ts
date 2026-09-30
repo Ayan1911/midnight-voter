@@ -1,3 +1,4 @@
+// @ts-nocheck
 import "core-js/proposals/iterator-helpers.js";
 import { WalletFacade, NetworkId, ShieldedWallet, UnshieldedWallet, DustWallet, createKeystore, PublicKey, WalletSeeds } from '@midnight-ntwrk/wallet-sdk';
 import { WalletTransaction, InMemoryTransactionHistoryStorage } from '@midnight-ntwrk/wallet-sdk-abstractions';

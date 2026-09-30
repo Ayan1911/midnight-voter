@@ -1,22 +1,43 @@
 import CompactStandardLibrary;
 
+// ─── Ledger State ────────────────────────────────────────────────────────────
 export ledger isInitialized: Boolean;
+// organizer stores persistentHash<Bytes<32>>(organizerSecret) so the actual
+// secret is never disclosed on-chain. Only someone who knows the preimage
+// can prove they are the organizer in close_auction().
 export ledger organizer: Bytes<32>;
 export ledger isOpen: Boolean;
 export ledger minReserveBid: Uint<64>;
+
+// commitments maps bidderId -> persistentHash<[Uint<64>, Bytes<32>]>([amount, salt])
+// The key is bidderId = persistentHash<Bytes<32>>(bidSecret).
+// The value is the sealed commitment to (amount, salt).
+// Neither amount nor salt is revealed until the bidder calls reveal_bid() after close.
 export ledger commitments: Map<Bytes<32>, Bytes<32>>;
+
+// Winner tracking — only updated in reveal_bid() once auction is closed.
 export ledger highestBid: Uint<64>;
 export ledger highestBidder: Bytes<32>;
 
+// ─── Witnesses ───────────────────────────────────────────────────────────────
+// All witnesses are supplied from the bidder's private state and never hit the ledger.
 witness getBidAmount(): Uint<64>;
 witness getBidSecret(): Bytes<32>;
 witness getBidSalt(): Bytes<32>;
 witness getOrganizerSecret(): Bytes<32>;
 
+// ─── initialize ──────────────────────────────────────────────────────────────
+// Can only be called once. The caller supplies their organizerSecret privately;
+// only its hash is stored on-chain, preventing unauthorized reinitialization.
 export circuit initialize(reserve: Uint<64>): [] {
+  // GUARD-1: Prevent reinitialization after the auction has already begun.
   assert(!isInitialized, "Auction already initialized");
+
+  // Derive organizer identity hash from the private secret.
+  // This is the ONLY information stored on-chain about the organizer.
   const orgSecret = getOrganizerSecret();
   organizer = disclose(persistentHash<Bytes<32>>(orgSecret));
+
   isInitialized = true;
   isOpen = true;
   minReserveBid = disclose(reserve);
@@ -24,49 +45,91 @@ export circuit initialize(reserve: Uint<64>): [] {
   highestBidder = 0 as Bytes<32>;
 }
 
+// ─── place_bid ───────────────────────────────────────────────────────────────
+// Seals (amount, salt) into a commitment stored under the bidder's identity hash.
+// Neither amount nor salt is disclosed during this call — the commitment scheme
+// ensures the ledger only learns that a bid exists, not its value.
+//
+// Commitment scheme: commitment = persistentHash<[Uint<64>, Bytes<32>]>([amount, salt])
+// This binds the bidder to a specific amount+salt pair without revealing either.
 export circuit place_bid(): [] {
+  // GUARD-2: Reject bids once the organizer has closed the auction.
   assert(isOpen, "Auction is closed for bidding");
 
   const amount = getBidAmount();
   const secret = getBidSecret();
-  const salt = getBidSalt();
+  const salt   = getBidSalt();
 
+  // GUARD-3: Reserve price check — enforced in the ZK circuit so the prover cannot
+  // omit it. The reserve price is public; the bid amount remains private.
   assert(amount >= minReserveBid, "Bid is below reserve price");
 
+  // Derive a stable bidder identity from the private secret.
   const bidderId = persistentHash<Bytes<32>>(secret);
+
+  // Commit to (amount, salt) together — binding the bidder to their exact amount
+  // while hiding it from on-chain observers. The salt prevents brute-forcing.
   const commitment = persistentHash<[Uint<64>, Bytes<32>]>([amount, salt]);
-  
-  // To avoid duplicate bids from the same bidder id, assert it's not member
+
+  // GUARD-4: Prevent a bidder from overwriting an existing commitment.
+  // If allowed, a bidder could update their bid after seeing others commit.
   assert(!commitments.member(disclose(bidderId)), "Bid already placed");
 
   commitments.insert(disclose(bidderId), disclose(commitment));
 }
 
+// ─── close_auction ───────────────────────────────────────────────────────────
+// Only the organizer can close the auction, preventing unauthorized early closure
+// that would force bidders into a reveal phase before they are ready.
 export circuit close_auction(): [] {
+  // GUARD-5: Cannot close an already-closed auction.
   assert(isOpen, "Auction is already closed");
+
+  // GUARD-6: Admin/organizer authorization.
+  // The organizer proves knowledge of the preimage of the stored organizer hash.
+  // An attacker who does not know the organizerSecret cannot satisfy this assertion.
   const orgSecret = getOrganizerSecret();
-  assert(disclose(persistentHash<Bytes<32>>(orgSecret)) == organizer, "Unauthorized: Only organizer can close auction");
+  assert(
+    disclose(persistentHash<Bytes<32>>(orgSecret)) == organizer,
+    "Unauthorized: only the auction organizer can close the auction"
+  );
+
   isOpen = false;
 }
 
+// ─── reveal_bid ──────────────────────────────────────────────────────────────
+// After close, each bidder reveals their sealed bid by providing the preimage
+// (amount, secret, salt). The circuit re-derives the commitment and verifies it
+// matches the on-chain value, then participates in winner selection.
+//
+// Winner selection: highest revealed bid wins. All reveals update the ledger's
+// highestBid/highestBidder in order, so the winner emerges naturally as reveals
+// accumulate — compatible with private bid amounts because no bid is revealed
+// until after the auction is closed (no adaptive strategy is possible).
 export circuit reveal_bid(): [] {
-  assert(!isOpen, "Auction is still open for bidding");
+  // GUARD-7: Reveals only allowed after close.
+  assert(!isOpen, "Auction is still open — wait for organizer to close before revealing");
 
   const amount = getBidAmount();
   const secret = getBidSecret();
-  const salt = getBidSalt();
+  const salt   = getBidSalt();
 
-  const bidderId = persistentHash<Bytes<32>>(secret);
+  // Re-derive the bidder identity and commitment from the private inputs.
+  const bidderId   = persistentHash<Bytes<32>>(secret);
   const commitment = persistentHash<[Uint<64>, Bytes<32>]>([amount, salt]);
 
-  // Verify commitment
-  assert(commitments.member(disclose(bidderId)), "No commitment found for bidder");
-  const storedCommitment = commitments.lookup(disclose(bidderId));
-  assert(storedCommitment == disclose(commitment), "Invalid bid reveal");
+  // GUARD-8: Bidder must have placed a commitment during the open phase.
+  assert(commitments.member(disclose(bidderId)), "No commitment found for this bidder");
 
+  // GUARD-9: The revealed (amount, salt) must match the sealed commitment exactly.
+  // This prevents a bidder from lying about their bid amount during reveal.
+  const storedCommitment = commitments.lookup(disclose(bidderId));
+  assert(storedCommitment == disclose(commitment), "Invalid bid reveal: commitment mismatch");
+
+  // Winner selection: update if this revealed bid is strictly higher than current best.
+  // The comparison is over disclosed amounts, which are now public after close.
   if (disclose(amount) > highestBid) {
-    highestBid = disclose(amount);
+    highestBid    = disclose(amount);
     highestBidder = disclose(bidderId);
   }
 }
-

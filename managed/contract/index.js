@@ -97,14 +97,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.callContext.currentQueryContext != undefined)) {
           __compactRuntime.typeError('initialize',
                                      'argument 1 (as invoked from Typescript)',
-                                     'auction.compact line 16 char 1',
+                                     'auction.compact line 32 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(reserve_0) === 'bigint' && reserve_0 >= 0n && reserve_0 <= 18446744073709551615n)) {
           __compactRuntime.typeError('initialize',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'auction.compact line 16 char 1',
+                                     'auction.compact line 32 char 1',
                                      'Uint<0..18446744073709551616>',
                                      reserve_0)
         }
@@ -133,7 +133,7 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.callContext.currentQueryContext != undefined)) {
           __compactRuntime.typeError('place_bid',
                                      'argument 1 (as invoked from Typescript)',
-                                     'auction.compact line 27 char 1',
+                                     'auction.compact line 55 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
@@ -157,7 +157,7 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.callContext.currentQueryContext != undefined)) {
           __compactRuntime.typeError('close_auction',
                                      'argument 1 (as invoked from Typescript)',
-                                     'auction.compact line 45 char 1',
+                                     'auction.compact line 84 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
@@ -181,7 +181,7 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.callContext.currentQueryContext != undefined)) {
           __compactRuntime.typeError('reveal_bid',
                                      'argument 1 (as invoked from Typescript)',
-                                     'auction.compact line 52 char 1',
+                                     'auction.compact line 109 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
@@ -211,7 +211,7 @@ export class Contract {
       reveal_bid: this.circuits.reveal_bid
     };
   }
-  initialState(...args_0) {
+  async initialState(...args_0) {
     if (args_0.length !== 1) {
       throw new __compactRuntime.CompactError(`Contract state constructor: expected 1 argument (as invoked from Typescript), received ${args_0.length}`);
     }
@@ -342,7 +342,7 @@ export class Contract {
     if (!(typeof(result_0) === 'bigint' && result_0 >= 0n && result_0 <= 18446744073709551615n)) {
       __compactRuntime.typeError('getBidAmount',
                                  'return value',
-                                 'auction.compact line 11 char 1',
+                                 'auction.compact line 24 char 1',
                                  'Uint<0..18446744073709551616>',
                                  result_0)
     }
@@ -359,7 +359,7 @@ export class Contract {
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('getBidSecret',
                                  'return value',
-                                 'auction.compact line 12 char 1',
+                                 'auction.compact line 25 char 1',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -376,7 +376,7 @@ export class Contract {
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('getBidSalt',
                                  'return value',
-                                 'auction.compact line 13 char 1',
+                                 'auction.compact line 26 char 1',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -393,7 +393,7 @@ export class Contract {
     if (!(result_0.buffer instanceof ArrayBuffer && result_0.BYTES_PER_ELEMENT === 1 && result_0.length === 32)) {
       __compactRuntime.typeError('getOrganizerSecret',
                                  'return value',
-                                 'auction.compact line 14 char 1',
+                                 'auction.compact line 27 char 1',
                                  'Bytes<32>',
                                  result_0)
     }
@@ -472,7 +472,7 @@ export class Contract {
                                        { ins: { cached: false, n: 1 } }]);
     const tmp_2 = __compactRuntime.convertBigintToBytes(32,
                                                         0n,
-                                                        'auction.compact line 24 char 19');
+                                                        'auction.compact line 45 char 19');
     __compactRuntime.queryLedgerState(context,
                                       partialProofData,
                                       [
@@ -583,7 +583,7 @@ export class Contract {
                                                                                                                                 alignment: _descriptor_7.alignment() } }] } },
                                                                                                      { popeq: { cached: false,
                                                                                                                 result: undefined } }]).value)),
-                            'Unauthorized: Only organizer can close auction');
+                            'Unauthorized: only the auction organizer can close the auction');
     __compactRuntime.queryLedgerState(context,
                                       partialProofData,
                                       [
@@ -609,7 +609,7 @@ export class Contract {
                                                                                                                    alignment: _descriptor_7.alignment() } }] } },
                                                                                         { popeq: { cached: false,
                                                                                                    result: undefined } }]).value),
-                            'Auction is still open for bidding');
+                            'Auction is still open — wait for organizer to close before revealing');
     const amount_0 = this._getBidAmount_0(context, partialProofData);
     const secret_0 = this._getBidSecret_0(context, partialProofData);
     const salt_0 = this._getBidSalt_0(context, partialProofData);
@@ -631,7 +631,7 @@ export class Contract {
                                                                                        'member',
                                                                                        { popeq: { cached: true,
                                                                                                   result: undefined } }]).value),
-                            'No commitment found for bidder');
+                            'No commitment found for this bidder');
     const storedCommitment_0 = _descriptor_1.fromValue(__compactRuntime.queryLedgerState(context,
                                                                                          partialProofData,
                                                                                          [
@@ -651,7 +651,7 @@ export class Contract {
                                                                                           { popeq: { cached: false,
                                                                                                      result: undefined } }]).value);
     __compactRuntime.assert(this._equal_1(storedCommitment_0, commitment_0),
-                            'Invalid bid reveal');
+                            'Invalid bid reveal: commitment mismatch');
     let t_0;
     if (t_0 = amount_0,
         t_0
@@ -820,7 +820,7 @@ export function ledger(stateOrChargedState) {
         if (!(key_0.buffer instanceof ArrayBuffer && key_0.BYTES_PER_ELEMENT === 1 && key_0.length === 32)) {
           __compactRuntime.typeError('member',
                                      'argument 1',
-                                     'auction.compact line 7 char 1',
+                                     'auction.compact line 16 char 1',
                                      'Bytes<32>',
                                      key_0)
         }
@@ -849,7 +849,7 @@ export function ledger(stateOrChargedState) {
         if (!(key_0.buffer instanceof ArrayBuffer && key_0.BYTES_PER_ELEMENT === 1 && key_0.length === 32)) {
           __compactRuntime.typeError('lookup',
                                      'argument 1',
-                                     'auction.compact line 7 char 1',
+                                     'auction.compact line 16 char 1',
                                      'Bytes<32>',
                                      key_0)
         }
