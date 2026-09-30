@@ -82,7 +82,7 @@ function mkCtx(circuitId: string, contractState: rt.ContractState): rt.CircuitCo
   return rt.createCircuitContext(
     circuitId,
     CONTRACT_ADDR,
-    COIN_KEY,
+    COIN_KEY as any,
     contractState,
     {} as PS,
     undefined,

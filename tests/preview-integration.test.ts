@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * preview-integration.test.ts
  *

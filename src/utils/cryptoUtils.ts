@@ -51,7 +51,7 @@ export function fromHex(hex: string, expectedLength?: number): Uint8Array {
  * Uses the Web Crypto SubtleCrypto API (available in all modern browsers and Node ≥ 18).
  */
 export async function sha256(data: Uint8Array): Promise<Uint8Array> {
-  const digest = await crypto.subtle.digest('SHA-256', data);
+  const digest = await crypto.subtle.digest('SHA-256', data as unknown as BufferSource);
   return new Uint8Array(digest);
 }
 
